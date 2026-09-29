@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+outputs/
+*.ncu-rep
+*.ncu-repz
+*.pftrace
+*.pftrace.gz
