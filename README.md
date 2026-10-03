@@ -1,12 +1,8 @@
 # LLM-Assisted Kernel Development in CuTe DSL, Helion and Triton
 
-Companion code for the article of the same name. Four problems, each worked
-through several implementations in different DSLs, on NVIDIA Blackwell (B200,
+Four problems are worked through several implementations in different DSLs, on NVIDIA Blackwell (B200,
 sm_100a) unless noted.
 
-The files here are copies taken from a private working repository. They are the
-kernels the article discusses, not a runnable benchmark harness — see
-[Running these](#running-these) below.
 
 ## Dual GEMM (`dual_gemm/`)
 
@@ -118,8 +114,7 @@ Triton, despite living under `solution/triton/` upstream; and
 `moe_fibench_ref.py` is a plain **PyTorch** reference with no Triton in it.
 
 Unlike everything else here, these two were not in the private working repo —
-they are fetched from the public
-[flashinfer-bench-starter-kit](https://github.com/whatdhack/flashinfer-bench-starter-kit/tree/main/solution/triton)
+they are fetched from the public FlashInfer Bench starter kit
 (`solution/triton/`, upstream at `1663ebbd6c1e`).
 
 ## Harness (`utils/`)
@@ -169,10 +164,9 @@ Versions the measurements were taken at: `nvidia-cutlass-dsl==4.7.1`,
 
 ## Provenance
 
-Everything except `moe/` is copied from a private working repository. The two
-`moe/` files come from the public
-[flashinfer-bench-starter-kit](https://github.com/whatdhack/flashinfer-bench-starter-kit/tree/main/solution/triton)
-at upstream `1663ebbd6c1e`.
+Everything except `moe/` is copied from a private working version of the reference-kernel repository. The two
+`moe/` files come from the public FlashInfer Bench starter kit,
+`solution/triton/`, at upstream `1663ebbd6c1e`.
 
 Three absolute paths tied to the original machine were replaced with
 environment lookups, so these differ from their sources by that much:
