@@ -3,7 +3,7 @@
 Companion repository for the article
 [LLM-Assisted Kernel Development in CuTe DSL, Gluon, Helion and Triton](https://whatdhack.medium.com/llm-assisted-kernel-development-in-cute-dsl-gluon-helion-and-triton-f1bbb6cacaa3).
 
-Four problems, each worked through several implementations in different DSLs,
+Four problems are worked through several implementations in different DSLs,
 on NVIDIA Blackwell (B200, sm_100a) unless noted.
 
 ## Dual GEMM (`dual_gemm/`)
