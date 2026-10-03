@@ -122,19 +122,61 @@ they are fetched from the public
 [flashinfer-bench-starter-kit](https://github.com/whatdhack/flashinfer-bench-starter-kit/tree/main/solution/triton)
 (`solution/triton/`, upstream at `1663ebbd6c1e`).
 
+## Harness (`utils/`)
+
+The per-problem task definitions and helpers the kernels import. Each problem
+has its own, so they are kept in subdirectories rather than flattened:
+
+| Path | What it is |
+| :--- | :--- |
+| `utils/cholesky/task.py`, `task.yml` | Input/output types, and the benchmark/test grid: 15 benchmark shapes from 4096x32 up to a single 32768x32768, plus the correctness cases, tolerances and `ranking_by: geom`. |
+| `utils/cholesky/bench_leaderboard.py` | `generate_input()` and `bench_one()` — the warmup-2, median-of-5 protocol every number here was taken with. |
+| `utils/cholesky/utils.py` | Shared helpers (from `problems/pmpp_v2/utils.py` upstream). |
+| `utils/dual_gemm/`, `utils/group_gemm/` | The same three files for those problems. |
+
+## Modal runners (`modal/`)
+
+The scripts that ran everything on a Modal B200 — benchmarks, ncu captures,
+IKET traces, and the one-off probes behind individual findings.
+
+| Path | What it is |
+| :--- | :--- |
+| `modal/cholesky/` (53 scripts) | Benchmarks (`bench_*`), ncu captures (`ncu_*`), sweeps (`sweep_*`), probes (`probe_*`), plus the IKET tooling: `iket_cute_b200.py` (capture), `iket_phase_summary.py` (per-launch phase table), `iket_slot_view.py` (re-lays a trace onto per-SM slot rows so residency is visible), and `bench_permit_ab_b200.py` (the A/B above). |
+| `modal/dual_gemm/`, `modal/group_gemm/` | The Modal harnesses for those problems. |
+
+Pins matter in these: the images pin `nvidia-cutlass-dsl==4.7.1`,
+`triton==3.7.1` and an exact `nsight-compute` package, because two of the CuTe
+port's bugs were version-sensitive DSL semantics.
+
 ## Running these
 
-These are the article's kernels, copied as-is. What is **not** here:
+Start from a problem's `eval.py` with its `utils/<problem>/` files alongside,
+or drive a kernel directly through the matching `modal/` runner (each needs a
+Modal account and a B200). Still **not** here:
 
-- The benchmark harnesses they import — `task.py`, `task.yml`, `utils.py`,
-  `bench_leaderboard.py` — so `eval.py` will not run standalone.
-- The Modal runner scripts used to profile on B200.
 - CUTLASS's own examples (`grouped_blockscaled_gemm.py`,
   `dense_blockscaled_gemm_persistent_prefetch.py`), which the CuTe versions
   were derived from. Those ship with CUTLASS.
+- The captured traces themselves (`.ncu-rep`, `.pftrace`, Kineto JSON) — about
+  1.7 GB, and gitignored here.
 
-The MoE files need `helion`, `safetensors`, and a workload file
-(`--workload`); they are not wired into the harnesses above.
+The MoE files are standalone: they need `helion`, `safetensors` and a workload
+file (`--workload`, or `MOE_WORKLOAD_DIR`), and are not wired into the
+harnesses above.
 
 Versions the measurements were taken at: `nvidia-cutlass-dsl==4.7.1`,
 `triton==3.7.1`, torch 2.13.0+cu130, ncu 2026.3.0, on a Modal B200.
+
+## Provenance
+
+Everything except `moe/` is copied from a private working repository. The two
+`moe/` files come from the public
+[flashinfer-bench-starter-kit](https://github.com/whatdhack/flashinfer-bench-starter-kit/tree/main/solution/triton)
+at upstream `1663ebbd6c1e`.
+
+Three absolute paths tied to the original machine were replaced with
+environment lookups, so these differ from their sources by that much:
+`moe/moe_fp8fpX_fused.py` (one hardcoded workload path, now
+`MOE_WORKLOAD_DIR`), and `modal/cholesky/ncu_source_syrk_b200.py` and
+`ncu_import_source.py` (a hardcoded scratch directory, now `SCRATCH_DIR`
+defaulting under the system temp dir).

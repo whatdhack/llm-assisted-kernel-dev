@@ -1705,7 +1705,7 @@ def main():
                 common_paths = [
                     Path.home() / "ai" / "mlsys26-contest" / args.workload,
                     Path.home() / "ai" / "flashinfer-trace" / args.workload,
-                    Path("/home/sgoswami/ai/mlsys26-contest") / args.workload,
+                    Path(os.environ.get("MOE_WORKLOAD_DIR", ".")) / args.workload,
                 ]
                 for candidate in common_paths:
                     if candidate.exists():
