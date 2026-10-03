@@ -1,6 +1,6 @@
 # LLM-Assisted Kernel Development in CuTe DSL, Helion and Triton
 
-Companion code for the article of the same name. Three problems, each worked
+Companion code for the article of the same name. Four problems, each worked
 through several implementations in different DSLs, on NVIDIA Blackwell (B200,
 sm_100a) unless noted.
 
@@ -102,6 +102,26 @@ found this: 13 ranges and 2 marks (`panel_L11`, `tmem_alloc`, `split`, `mma`,
 `CUTE_DSL_COMPILER_OPT` contains `iket`, which `run-iket` sets, so ordinary
 runs are unaffected.
 
+## MoE (`moe/`)
+
+Mixture-of-experts with FP8 block-scaled weights, from the FlashInfer Bench
+work. DeepSeek-V3 style no-aux routing, then per-expert GEMM1 → SwiGLU → GEMM2.
+
+| File | What it is |
+| :--- | :--- |
+| `moe_fp8fpX_fused.py` | The optimized kernel. Hybrid split: dequantization (FP8 → BF16) and routing on the host, expert computation (GEMM1 → SwiGLU → GEMM2) in the device kernel. Carries `bf16`/`fp16`/`fp32`/`tf32` variants of both the dequantization and the expert computation, which is how the article's question — whether the FP8 → FP32 conversion can be avoided by staying in lower precision — gets measured. BF16 is the default: same dynamic range as FP32, so none of FP16's ±65504 overflow risk, at half the memory. |
+| `moe_fibench_ref.py` | PyTorch reference. Takes FP8 e4m3fn hidden states and both GEMM weight sets with their block scales, applies the DeepSeek-V3 no-aux routing (`sigmoid(logits) + bias`, grouped top-k, `routed_scaling_factor`), and runs the experts in full precision. Shapes are H=7168, I=2048, 256 global experts, 32 local. |
+
+Two notes on naming, since both differ from how the article lists them:
+`moe_fp8fpX_fused.py` is a **Helion** kernel (`import helion`, `hl.*`), not
+Triton, despite living under `solution/triton/` upstream; and
+`moe_fibench_ref.py` is a plain **PyTorch** reference with no Triton in it.
+
+Unlike everything else here, these two were not in the private working repo —
+they are fetched from the public
+[flashinfer-bench-starter-kit](https://github.com/whatdhack/flashinfer-bench-starter-kit/tree/main/solution/triton)
+(`solution/triton/`, upstream at `1663ebbd6c1e`).
+
 ## Running these
 
 These are the article's kernels, copied as-is. What is **not** here:
@@ -112,6 +132,9 @@ These are the article's kernels, copied as-is. What is **not** here:
 - CUTLASS's own examples (`grouped_blockscaled_gemm.py`,
   `dense_blockscaled_gemm_persistent_prefetch.py`), which the CuTe versions
   were derived from. Those ship with CUTLASS.
+
+The MoE files need `helion`, `safetensors`, and a workload file
+(`--workload`); they are not wired into the harnesses above.
 
 Versions the measurements were taken at: `nvidia-cutlass-dsl==4.7.1`,
 `triton==3.7.1`, torch 2.13.0+cu130, ncu 2026.3.0, on a Modal B200.
